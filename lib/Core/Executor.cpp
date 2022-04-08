@@ -2079,6 +2079,7 @@ Function* Executor::getTargetFunction(Value *calledVal, ExecutionState &state) {
 
 void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
   Instruction *i = ki->inst;
+  // llvm::errs() << *i << "\n";
   switch (i->getOpcode()) {
     // Control flow
   case Instruction::Ret: {

@@ -26,6 +26,7 @@
 #include "klee/Support/Debug.h"
 #include "klee/Support/ErrorHandling.h"
 #include "klee/Support/OptionCategories.h"
+#include "klee/Expr/ExprSMTLIBPrinter.h"
 
 #include "llvm/ADT/Twine.h"
 #include "llvm/IR/DataLayout.h"
@@ -562,6 +563,11 @@ void SpecialFunctionHandler::handlePrintExpr(ExecutionState &state,
 
   std::string msg_str = readStringAtAddress(state, arguments[0]);
   llvm::errs() << msg_str << ":" << arguments[1] << "\n";
+  // ExprSMTLIBPrinter printer;
+  // printer.setOutput(llvm::errs());
+  // Query query(state.constraints, ConstantExpr::alloc(0, Expr::Bool));
+  // printer.setQuery(query);
+  // printer.generateOutput();
 }
 
 void SpecialFunctionHandler::handleSetForking(ExecutionState &state,

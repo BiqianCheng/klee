@@ -19,6 +19,7 @@ set(SRC_FILES
         htonl.c
         memchr.c
         mempcpy.c
+        printf.c
         putchar.c
         stpcpy.c
         strcat.c

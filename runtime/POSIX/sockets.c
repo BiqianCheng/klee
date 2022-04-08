@@ -143,14 +143,14 @@ int socket(int domain, int type, int protocol) {
   // exe_file_t* f;
 
   // if (klee_zest_enabled()) {
-  //   fd = __get_new_fd(&f);
+    // fd = __get_new_fd(&f);
   //   if (fd < 0) {
   //     klee_warning("No more file descriptors");
   //     errno = EMFILE;
   //     return fd;
   //   }
 
-  //   int os_r = syscall(__NR_socket, domain, type, protocol);
+    // int os_r = syscall(__NR_socket, domain, type, protocol);
   //   if (os_r < 0) {
   //     __undo_get_new_fd(f);
   //     errno = klee_get_errno();
