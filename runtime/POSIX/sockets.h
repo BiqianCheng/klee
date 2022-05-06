@@ -1,16 +1,15 @@
-
 #ifndef __EXE_SOCKETS__
 #define __EXE_SOCKETS__
-
 
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include "fd.h"
 
 struct exe_file_t;
 
 int socket(int domain, int type, int protocol) __attribute__((weak));
-int socket(int domain, int type, int protocol);
+;
 int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
 int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
 int listen(int sockfd, int backlog);
@@ -47,6 +46,6 @@ ssize_t __fd_recvfrom(int fd, void *buf, size_t len, int flags,
                       struct sockaddr *from, socklen_t *fromlen);
 ssize_t __fd_sendmsg(int fd, const struct msghdr *msg, int flags);
 ssize_t __fd_recvmsg(int fd, struct msghdr *msg, int flags);
-// ssize_t __fd_attach_dgram(struct exe_file_t *f);
+ssize_t __fd_attach_dgram(exe_file_t *f);
 
 #endif
