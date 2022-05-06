@@ -71,12 +71,12 @@ typedef struct {
   off64_t off;            /* offset */
   exe_disk_file_t *dfile; /* ptr to file on disk, if symbolic */
 
-  int domain; /* if socket */
   exe_sockaddr_t local;
   exe_sockaddr_t *foreign; /* socket addresses, if a symbolic socket;
                               symbolic sockets have the addr allocated
                               and addrlen properly assigned.  If TCP,
                               then foreign points to dfile->src */
+  int domain;              /* if socket */
 } exe_file_t;
 
 typedef struct {
@@ -129,11 +129,10 @@ void klee_init_fds(unsigned n_files, unsigned file_length,
                    unsigned stream_len, unsigned n_dgrams, unsigned dgram_len,
                    unsigned max_failures);
 void klee_init_env(int *argcPtr, char ***argvPtr);
-exe_file_t* __get_file(int fd);
+exe_file_t *__get_file(int fd);
 /* *** */
 int __get_new_fd(exe_file_t **pf);
 void __undo_get_new_fd(exe_file_t *f);
-
 
 int __fd_open(const char *pathname, int flags, mode_t mode);
 int __fd_openat(int basefd, const char *pathname, int flags, mode_t mode);
@@ -146,7 +145,6 @@ int __fd_statfs(const char *path, struct statfs *buf);
 int __fd_getdents(unsigned int fd, struct dirent64 *dirp, unsigned int count);
 ssize_t __fd_scatter_read(exe_file_t *f, const struct iovec *iov, int iovcnt);
 ssize_t __fd_gather_write(exe_file_t *f, const struct iovec *iov, int iovcnt);
-
 
 int socket(int, int, int);
 

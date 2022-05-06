@@ -1437,7 +1437,7 @@ static const char *__concretize_string(const char *s) {
   return s;
 }
 
-/* Returns next available fd.  Sets eOpen in associated flags.  
+/* Returns next available fd.  Sets eOpen in associated flags.
    If no more fds are available, returns -1 and sets errno to ENFILE.
    Otherwise, set *pf to &__exe_env.fds[fd]. */
 int __get_new_fd(exe_file_t **pf) {
@@ -1450,7 +1450,7 @@ int __get_new_fd(exe_file_t **pf) {
     errno = ENFILE;
     return -1;
   }
-  
+
   *pf = &__exe_env.fds[fd];
 
   /* Should be the case if file was available, but just in case. */
@@ -1461,10 +1461,7 @@ int __get_new_fd(exe_file_t **pf) {
   return fd;
 }
 
-
-void  __undo_get_new_fd(exe_file_t *f) {
-  memset(f, 0, sizeof *f);
-}
+void __undo_get_new_fd(exe_file_t *f) { memset(f, 0, sizeof *f); }
 
 /* Trivial model:
    if path is "/" (basically no change) accept, otherwise reject
@@ -1571,11 +1568,13 @@ ssize_t __fd_gather_write(exe_file_t *f, const struct iovec *iov, int iovcnt) {
       f->off += iov->iov_len;
     }
 
+    klee_print_expr("Size of the data structure send to the client", total);
     return total;
   } else {
     int os = syscall(__NR_writev, f->fd, iov, iovcnt);
     if (os < 0)
       errno = klee_get_errno();
+    klee_print_expr("Size of the data structure send to the client", os);
     return os;
   }
 }

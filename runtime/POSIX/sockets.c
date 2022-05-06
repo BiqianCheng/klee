@@ -697,8 +697,6 @@ ssize_t __fd_sendto(int fd, const void *buf, size_t len, int flags,
   msg.msg_controllen = 0;
   msg.msg_flags = flags;
 
-  klee_print_expr("Size of the data structure send to the client", len);
-
   return __fd_sendmsg(fd, &msg, flags);
 }
 
