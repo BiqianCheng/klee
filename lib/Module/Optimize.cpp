@@ -104,25 +104,31 @@ static void AddStandardCompilePasses(legacy::PassManager &PM) {
   if (StripDebug)
     addPass(PM, createStripSymbolsPass(true));
 
-  addPass(PM, createCFGSimplificationPass());    // Clean up disgusting code
-  addPass(PM, createPromoteMemoryToRegisterPass());// Kill useless allocas
-  addPass(PM, createGlobalOptimizerPass());      // Optimize out global vars
-  addPass(PM, createGlobalDCEPass());            // Remove unused fns and globs
-#if LLVM_VERSION_CODE >= LLVM_VERSION(11, 0)
-  addPass(PM, createSCCPPass());                 // Constant prop with SCCP
-#else
-  addPass(PM, createIPConstantPropagationPass());// IP Constant Propagation
-#endif
-  addPass(PM, createDeadArgEliminationPass());   // Dead argument elimination
-  addPass(PM, createInstructionCombiningPass()); // Clean up after IPCP & DAE
-  addPass(PM, createCFGSimplificationPass());    // Clean up after IPCP & DAE
+    addPass(PM, createCFGSimplificationPass());    // Clean up disgusting code
+    addPass(PM, createPromoteMemoryToRegisterPass());// Kill useless allocas
+    addPass(PM, createGlobalOptimizerPass());      // Optimize out global vars
+    addPass(PM, createGlobalDCEPass());            // Remove unused fns and globs
+}
 
-  addPass(PM, createPruneEHPass());              // Remove dead EH info
-#if LLVM_VERSION_CODE >= LLVM_VERSION(3, 9)
-  addPass(PM, createPostOrderFunctionAttrsLegacyPass());
+static void AddStandardCompilePasses(legacy::PassManager &VS){
+#if LLVM_VERSION_CODE >= LLVM_VERSION(11, 0)
+  addPass(VS, createSCCPPass());                 // Constant prop with SCCP
 #else
-  addPass(PM, createPostOrderFunctionAttrsPass());
+  addPass(VS, createIPConstantPropagationPass());// IP Constant Propagation
 #endif
+  addPass(VS, createDeadArgEliminationPass());   // Dead argument elimination
+  addPass(VS, createInstructionCombiningPass()); // Clean up after IPCP & DAE
+  addPass(VS, createCFGSimplificationPass());    // Clean up after IPCP & DAE
+
+  addPass(VS, createPruneEHPass());              // Remove dead EH info
+#if LLVM_VERSION_CODE >= LLVM_VERSION(3, 9)
+  addPass(VS, createPostOrderFunctionAttrsLegacyPass());
+#else
+  addPass(VS, createPostOrderFunctionAttrsPass());
+#endif
+}
+
+static void AddStandardCompilePasses(){
   addPass(PM, createReversePostOrderFunctionAttrsPass()); // Deduce function attrs
 
   if (!DisableInline)
