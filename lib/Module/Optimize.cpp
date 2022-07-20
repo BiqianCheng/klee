@@ -101,6 +101,7 @@ static void AddStandardCompilePasses(legacy::PassManager &PM) {
   PM.add(createVerifierPass());                  // Verify that input is correct
 
   // If the -strip-debug command line option was specified, do it.
+    addPass(PM, createBoundedLoopPass());
   if (StripDebug)
     addPass(PM, createStripSymbolsPass(true));
 
@@ -108,77 +109,76 @@ static void AddStandardCompilePasses(legacy::PassManager &PM) {
     addPass(PM, createPromoteMemoryToRegisterPass());// Kill useless allocas
     addPass(PM, createGlobalOptimizerPass());      // Optimize out global vars
     addPass(PM, createGlobalDCEPass());            // Remove unused fns and globs
+
+  #if LLVM_VERSION_CODE >= LLVM_VERSION(11, 0)
+    addPass(PM, createSCCPPass());                 // Constant prop with SCCP
+  #else
+    addPass(PM, createIPConstantPropagationPass());// IP Constant Propagation
+  #endif
+    addPass(PM, createDeadArgEliminationPass());   // Dead argument elimination
+    addPass(PM, createInstructionCombiningPass()); // Clean up after IPCP & DAE
+    addPass(PM, createCFGSimplificationPass());    // Clean up after IPCP & DAE
+
+    addPass(PM, createPruneEHPass());              // Remove dead EH info
+  #if LLVM_VERSION_CODE >= LLVM_VERSION(3, 9)
+    addPass(PM, createPostOrderFunctionAttrsLegacyPass());
+  #else
+    addPass(PM, createPostOrderFunctionAttrsPass());
+  #endif
+
+    addPass(PM, createReversePostOrderFunctionAttrsPass()); // Deduce function attrs
+
+    if (!DisableInline)
+      addPass(PM, createFunctionInliningPass());   // Inline small functions
+    addPass(PM, createArgumentPromotionPass());    // Scalarize uninlined fn args
+
+    addPass(PM, createInstructionCombiningPass()); // Cleanup for scalarrepl.
+    addPass(PM, createJumpThreadingPass());        // Thread jumps.
+    addPass(PM, createCFGSimplificationPass());    // Merge & remove BBs
+  #if LLVM_VERSION_CODE >= LLVM_VERSION(3, 9)
+    addPass(PM, createSROAPass());                 // Break up aggregate allocas
+  #else
+    addPass(PM, createScalarReplAggregatesPass()); // Break up aggregate allocas
+  #endif
+
+    addPass(PM, createInstructionCombiningPass()); // Combine silly seq's
+
+    addPass(PM, createTailCallEliminationPass());  // Eliminate tail calls
+    addPass(PM, createCFGSimplificationPass());    // Merge & remove BBs
+    addPass(PM, createReassociatePass());          // Reassociate expressions
+    addPass(PM, createLoopRotatePass());
+    addPass(PM, createLICMPass());                 // Hoist loop invariants
+    addPass(PM, createLoopUnswitchPass());         // Unswitch loops.
+    // FIXME : Removing instcombine causes nestedloop regression.
+    addPass(PM, createInstructionCombiningPass());
+    addPass(PM, createIndVarSimplifyPass());       // Canonicalize indvars
+    addPass(PM, createLoopDeletionPass());         // Delete dead loops
+    addPass(PM, createLoopUnrollPass());           // Unroll small loops
+    addPass(PM, createInstructionCombiningPass()); // Clean up after the unroller
+    addPass(PM, createGVNPass());                  // Remove redundancies
+    addPass(PM, createMemCpyOptPass());            // Remove memcpy / form memset
+    addPass(PM, createSCCPPass());                 // Constant prop with SCCP
+
+    // Run instcombine after redundancy elimination to exploit opportunities
+    // opened up by them.
+    addPass(PM, createInstructionCombiningPass());
+
+    addPass(PM, createDeadStoreEliminationPass()); // Delete dead stores
+    addPass(PM, createAggressiveDCEPass());        // Delete dead instructions
+    addPass(PM, createCFGSimplificationPass());    // Merge & remove BBs
+    addPass(PM, createStripDeadPrototypesPass());  // Get rid of dead prototypes
+    addPass(PM, createConstantMergePass());        // Merge dup global constants
 }
 
-static void AddStandardCompilePasses(legacy::PassManager &VS){
-#if LLVM_VERSION_CODE >= LLVM_VERSION(11, 0)
-  addPass(VS, createSCCPPass());                 // Constant prop with SCCP
-#else
-  addPass(VS, createIPConstantPropagationPass());// IP Constant Propagation
-#endif
-  addPass(VS, createDeadArgEliminationPass());   // Dead argument elimination
-  addPass(VS, createInstructionCombiningPass()); // Clean up after IPCP & DAE
-  addPass(VS, createCFGSimplificationPass());    // Clean up after IPCP & DAE
-
-  addPass(VS, createPruneEHPass());              // Remove dead EH info
-#if LLVM_VERSION_CODE >= LLVM_VERSION(3, 9)
-  addPass(VS, createPostOrderFunctionAttrsLegacyPass());
-#else
-  addPass(VS, createPostOrderFunctionAttrsPass());
-#endif
-}
-
-static void AddStandardCompilePasses(){
-  addPass(PM, createReversePostOrderFunctionAttrsPass()); // Deduce function attrs
-
-  if (!DisableInline)
-    addPass(PM, createFunctionInliningPass());   // Inline small functions
-  addPass(PM, createArgumentPromotionPass());    // Scalarize uninlined fn args
-
-  addPass(PM, createInstructionCombiningPass()); // Cleanup for scalarrepl.
-  addPass(PM, createJumpThreadingPass());        // Thread jumps.
-  addPass(PM, createCFGSimplificationPass());    // Merge & remove BBs
-#if LLVM_VERSION_CODE >= LLVM_VERSION(3, 9)
-  addPass(PM, createSROAPass());                 // Break up aggregate allocas
-#else
-  addPass(PM, createScalarReplAggregatesPass()); // Break up aggregate allocas
-#endif
-  addPass(PM, createInstructionCombiningPass()); // Combine silly seq's
-
-  addPass(PM, createTailCallEliminationPass());  // Eliminate tail calls
-  addPass(PM, createCFGSimplificationPass());    // Merge & remove BBs
-  addPass(PM, createReassociatePass());          // Reassociate expressions
-  addPass(PM, createLoopRotatePass());
-  addPass(PM, createLICMPass());                 // Hoist loop invariants
-  addPass(PM, createLoopUnswitchPass());         // Unswitch loops.
-  // FIXME : Removing instcombine causes nestedloop regression.
-  addPass(PM, createInstructionCombiningPass());
-  addPass(PM, createIndVarSimplifyPass());       // Canonicalize indvars
-  addPass(PM, createLoopDeletionPass());         // Delete dead loops
-  addPass(PM, createLoopUnrollPass());           // Unroll small loops
-  addPass(PM, createInstructionCombiningPass()); // Clean up after the unroller
-  addPass(PM, createGVNPass());                  // Remove redundancies
-  addPass(PM, createMemCpyOptPass());            // Remove memcpy / form memset
-  addPass(PM, createSCCPPass());                 // Constant prop with SCCP
-
-  // Run instcombine after redundancy elimination to exploit opportunities
-  // opened up by them.
-  addPass(PM, createInstructionCombiningPass());
-
-  addPass(PM, createDeadStoreEliminationPass()); // Delete dead stores
-  addPass(PM, createAggressiveDCEPass());        // Delete dead instructions
-  addPass(PM, createCFGSimplificationPass());    // Merge & remove BBs
-  addPass(PM, createStripDeadPrototypesPass());  // Get rid of dead prototypes
-  addPass(PM, createConstantMergePass());        // Merge dup global constants
-}
-
-/// Optimize - Perform link time optimizations. This will run the scalar
-/// optimizations, any loaded plugin-optimization modules, and then the
-/// inter-procedural optimizations if applicable.
+  /// Optimize - Perform link time optimizations. This will run the scalar
+  /// optimizations, any loaded plugin-optimization modules, and then the
+  /// inter-procedural optimizations if applicable.
 void Optimize(Module *M, llvm::ArrayRef<const char *> preservedFunctions) {
 
   // Instantiate the pass manager to organize the passes.
   legacy::PassManager Passes;
+  // Add another pass manager to store another half of the passes
+  legacy::PassManager newPasses;
 
   // If we're verifying, start off with a verification pass.
   if (VerifyEach)
@@ -292,6 +292,6 @@ void Optimize(Module *M, llvm::ArrayRef<const char *> preservedFunctions) {
   addPass(Passes, createGlobalDCEPass());
 
   // Run our queue of passes all at once now, efficiently.
-  Passes.run(*M);
+  Passes.run(*M.dump);
 }
 }
